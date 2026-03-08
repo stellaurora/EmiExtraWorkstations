@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "com.stellaurora.emiextraworkstations.mixin",
+  "refmap": "emiextraworkstations.refmap.json",
+  "mixins": [
+  ],
+  "client": [
+    "RecipeScreenMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
