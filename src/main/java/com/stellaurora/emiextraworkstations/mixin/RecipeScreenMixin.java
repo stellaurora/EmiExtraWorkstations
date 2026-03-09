@@ -1,5 +1,6 @@
 package com.stellaurora.emiextraworkstations.mixin;
 
+import com.stellaurora.emiextraworkstations.Config;
 import dev.emi.emi.EmiRenderHelper;
 import dev.emi.emi.api.EmiApi;
 import dev.emi.emi.api.recipe.EmiRecipeCategory;
@@ -40,9 +41,24 @@ public abstract class RecipeScreenMixin {
         };
     }
 
+    private int emi$getMaxLines() {
+        return switch (EmiConfig.workstationLocation) {
+            case LEFT, RIGHT -> Math.max(1, Config.MAX_COLUMNS.get());
+            case BOTTOM      -> Math.max(1, Config.MAX_ROWS.get());
+            default          -> 1;
+        };
+    }
+
+    private int emi$getMaxVisible(int total) {
+        return Math.min(total, emi$getSlotsPerLine() * emi$getMaxLines());
+    }
+
     private int emi$getLineCount(int total) {
         if (total == 0) return 0;
-        return (int) Math.ceil((double) total / emi$getSlotsPerLine());
+        return Math.min(
+            (int) Math.ceil((double) total / emi$getSlotsPerLine()),
+            emi$getMaxLines()
+        );
     }
 
     private Bounds emi$slotBounds(int i) {
@@ -52,8 +68,8 @@ public abstract class RecipeScreenMixin {
         int resolveOffset = getResolveOffset();
 
         return switch (EmiConfig.workstationLocation) {
-            case LEFT   -> new Bounds(x - 18 - line * 18,               y + 9 + resolveOffset + slot * 18, 18, 18);
-            case RIGHT  -> new Bounds(x + backgroundWidth + line * 18,  y + 9 + resolveOffset + slot * 18, 18, 18);
+            case LEFT   -> new Bounds(x - 18 - line * 18,                y + 9 + resolveOffset + slot * 18, 18, 18);
+            case RIGHT  -> new Bounds(x + backgroundWidth + line * 18,   y + 9 + resolveOffset + slot * 18, 18, 18);
             case BOTTOM -> new Bounds(x + 5 + resolveOffset + slot * 18, y + backgroundHeight - 23 + line * 18, 18, 18);
             default     -> Bounds.EMPTY;
         };
@@ -78,16 +94,21 @@ public abstract class RecipeScreenMixin {
         )
     )
     private Bounds emi$redirectBoundsSetPage(RecipeScreen self, int i) {
+        List<EmiIngredient> workstations = EmiApi.getRecipeManager().getWorkstations(getFocusedCategory());
+        int total = workstations == null ? 0 : workstations.size();
+        if (i >= emi$getMaxVisible(total)) {
+            return Bounds.EMPTY;
+        }
         return emi$slotBounds(i);
     }
-    
+
     @Inject(
         method = "render",
-        remap = true, 
+        remap = true,
         at = @At(
             value = "INVOKE",
             target = "Ldev/emi/emi/screen/RecipeScreen;getMaxWorkstations()I",
-            remap = false 
+            remap = false
         )
     )
     private void emi$drawUnifiedWorkstationPanel(
@@ -97,23 +118,22 @@ public abstract class RecipeScreenMixin {
 
         List<EmiIngredient> workstations = EmiApi.getRecipeManager().getWorkstations(getFocusedCategory());
         int total         = workstations == null ? 0 : workstations.size();
+        int visibleTotal  = emi$getMaxVisible(total);
         int slotsPerLine  = emi$getSlotsPerLine();
-        int lineCount     = emi$getLineCount(total);
+        int lineCount     = emi$getLineCount(visibleTotal);
         int resolveOffset = getResolveOffset();
 
-        int slotsInFirstLine = Math.min(slotsPerLine, total);
+        int slotsInFirstLine = Math.min(slotsPerLine, visibleTotal);
 
-        boolean hasContent = total > 0 || RecipeScreen.resolve != null;
+        boolean hasContent = visibleTotal > 0 || RecipeScreen.resolve != null;
         if (!hasContent) return;
 
         int effectiveLines = Math.max(lineCount, 1);
 
         switch (EmiConfig.workstationLocation) {
             case LEFT -> {
-
                 int panelX = x - 18 - (effectiveLines - 1) * 18;
                 int panelY = y + 9 - resolveOffset;
-
                 int panelW = 10 + 18 * effectiveLines;
                 int panelH = (slotsInFirstLine == 0 && resolveOffset > 0)
                     ? 10 + resolveOffset
@@ -137,7 +157,6 @@ public abstract class RecipeScreenMixin {
                 int panelW = (slotsInFirstLine == 0 && resolveOffset > 0)
                     ? 10 + resolveOffset
                     : 10 + 18 * slotsInFirstLine + resolveOffset;
-
                 int panelH = 10 + 18 * effectiveLines;
                 EmiRenderHelper.drawNinePatch(context, TEXTURE,
                     panelX - 5, panelY - 5, panelW, panelH, 58, 0, 5, 1);
@@ -145,14 +164,13 @@ public abstract class RecipeScreenMixin {
         }
     }
 
-
     @Redirect(
         method = "render",
         remap = true,
         at = @At(
             value = "INVOKE",
             target = "Ldev/emi/emi/screen/RecipeScreen;getMaxWorkstations()I",
-            remap = false 
+            remap = false
         )
     )
     private int emi$suppressVanillaPanel(RecipeScreen self) {
