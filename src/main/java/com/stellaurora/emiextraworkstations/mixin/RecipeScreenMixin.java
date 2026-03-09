@@ -32,7 +32,7 @@ public abstract class RecipeScreenMixin {
 
     @Shadow public abstract int getResolveOffset();
     @Shadow public abstract EmiRecipeCategory getFocusedCategory();
-
+    
     private int emi$getSlotsPerLine() {
         return switch (EmiConfig.workstationLocation) {
             case LEFT, RIGHT -> Math.max(1, (backgroundHeight - getResolveOffset() - 18) / 18);
