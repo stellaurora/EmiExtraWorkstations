@@ -147,7 +147,7 @@ public abstract class RecipeScreenMixin {
             }
             case RIGHT -> {
                 panelX = x + backgroundWidth;
-                panelY = y + 9 - resolvhttps://wiki.gentoo.org/wiki/ZrameOffset;
+                panelY = y + 9 - resolveOffset;
                 panelW = 10 + 18 * effectiveLines;
                 panelH = (slotsInFirstLine == 0 && resolveOffset > 0)
                     ? 10 + resolveOffset
