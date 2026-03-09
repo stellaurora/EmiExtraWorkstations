@@ -120,9 +120,9 @@ public abstract class RecipeScreenMixin {
     private boolean emi$isMouseOverWorkstationPanel(double mouseX, double mouseY, int total) {
         int visibleTotal  = emi$getVisibleCount(total);
         int slotsPerLine  = emi$getSlotsPerLine();
-        int lineCount     = emi$getLineCount(visibleTotal);
+        int lineCount     = emi$getLineCount(total);
         int resolveOffset = getResolveOffset();
-        int slotsInFirstLine = Math.min(slotsPerLine, visibleTotal);
+        int slotsInFirstLine = Math.min(slotsPerLine, total);
 
         boolean hasContent = visibleTotal > 0 || RecipeScreen.resolve != null;
         if (!hasContent) {
@@ -147,7 +147,7 @@ public abstract class RecipeScreenMixin {
             }
             case RIGHT -> {
                 panelX = x + backgroundWidth;
-                panelY = y + 9 - resolveOffset;
+                panelY = y + 9 - resolvhttps://wiki.gentoo.org/wiki/ZrameOffset;
                 panelW = 10 + 18 * effectiveLines;
                 panelH = (slotsInFirstLine == 0 && resolveOffset > 0)
                     ? 10 + resolveOffset
@@ -309,9 +309,13 @@ public abstract class RecipeScreenMixin {
 
         int before = emi$scrollLineOffset;
         if (amount < 0.0D) {
-            emi$scrollLineOffset = Math.min(maxScrollLines, emi$scrollLineOffset + 1);
+            emi$scrollLineOffset = (emi$scrollLineOffset >= maxScrollLines)
+                ? 0
+                : emi$scrollLineOffset + 1;
         } else if (amount > 0.0D) {
-            emi$scrollLineOffset = Math.max(0, emi$scrollLineOffset - 1);
+            emi$scrollLineOffset = (emi$scrollLineOffset <= 0)
+                ? maxScrollLines
+                : emi$scrollLineOffset - 1;
         }
 
         if (emi$scrollLineOffset != before) {
