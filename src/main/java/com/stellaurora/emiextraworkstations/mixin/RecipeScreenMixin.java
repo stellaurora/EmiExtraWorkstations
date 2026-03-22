@@ -43,7 +43,7 @@ public abstract class RecipeScreenMixin {
 
     private int emi$scrollLineOffset = 0;
     private boolean emi$preserveScrollOnSetPage = false;
-    
+
     private int emi$getSlotsPerLine() {
         return switch (EmiConfig.workstationLocation) {
             case LEFT, RIGHT -> Math.max(1, (backgroundHeight - getResolveOffset() - 18) / 18);
@@ -118,52 +118,38 @@ public abstract class RecipeScreenMixin {
     }
 
     private boolean emi$isMouseOverWorkstationPanel(double mouseX, double mouseY, int total) {
-        int visibleTotal  = emi$getVisibleCount(total);
-        int slotsPerLine  = emi$getSlotsPerLine();
-        int lineCount     = emi$getLineCount(total);
-        int resolveOffset = getResolveOffset();
+        int visibleTotal     = emi$getVisibleCount(total);
+        int slotsPerLine     = emi$getSlotsPerLine();
+        int lineCount        = emi$getLineCount(total);
+        int resolveOffset    = getResolveOffset();
         int slotsInFirstLine = Math.min(slotsPerLine, total);
 
-        boolean hasContent = visibleTotal > 0 || RecipeScreen.resolve != null;
-        if (!hasContent) {
-            return false;
-        }
+        if (visibleTotal <= 0) return false;
 
         int effectiveLines = Math.max(lineCount, 1);
+        int panelH = 10 + 18 * slotsInFirstLine;
 
-        int panelX;
-        int panelY;
-        int panelW;
-        int panelH;
+        int panelX, panelY, panelW;
 
+        // todo: pull out size calculation for mouse hitbox and drawing, since they should be the same
         switch (EmiConfig.workstationLocation) {
             case LEFT -> {
                 panelX = x - 18 - (effectiveLines - 1) * 18;
-                panelY = y + 9 - resolveOffset;
+                panelY = y + 9 + resolveOffset;
                 panelW = 10 + 18 * effectiveLines;
-                panelH = (slotsInFirstLine == 0 && resolveOffset > 0)
-                    ? 10 + resolveOffset
-                    : 10 + 18 * slotsInFirstLine + resolveOffset;
             }
             case RIGHT -> {
                 panelX = x + backgroundWidth;
-                panelY = y + 9 - resolveOffset;
+                panelY = y + 9 + resolveOffset;
                 panelW = 10 + 18 * effectiveLines;
-                panelH = (slotsInFirstLine == 0 && resolveOffset > 0)
-                    ? 10 + resolveOffset
-                    : 10 + 18 * slotsInFirstLine + resolveOffset;
             }
             case BOTTOM -> {
-                panelX = x + 5 - resolveOffset;
+                panelX = x + 5 + resolveOffset;
                 panelY = y + backgroundHeight - 23;
-                panelW = (slotsInFirstLine == 0 && resolveOffset > 0)
-                    ? 10 + resolveOffset
-                    : 10 + 18 * slotsInFirstLine + resolveOffset;
+                panelW = 10 + 18 * slotsInFirstLine;
                 panelH = 10 + 18 * effectiveLines;
             }
-            default -> {
-                return false;
-            }
+            default -> { return false; }
         }
 
         return emi$isInsideRect(mouseX, mouseY, panelX - 5, panelY - 5, panelW, panelH);
@@ -192,16 +178,12 @@ public abstract class RecipeScreenMixin {
     private void emi$appendScrolledWorkstations(CallbackInfo ci) {
         List<EmiIngredient> workstations = EmiApi.getRecipeManager().getWorkstations(getFocusedCategory());
         int total = workstations == null ? 0 : workstations.size();
-        if (total <= 0) {
-            return;
-        }
+        if (total <= 0) return;
 
         emi$clampScroll(total);
-        int start = emi$getVisibleStartIndex();
+        int start        = emi$getVisibleStartIndex();
         int visibleCount = emi$getVisibleCount(total);
-        if (visibleCount <= 0) {
-            return;
-        }
+        if (visibleCount <= 0) return;
 
         WidgetGroup widgets = new WidgetGroup(null, 0, 0, 0, 0);
         for (int i = 0; i < visibleCount; i++) {
@@ -227,47 +209,39 @@ public abstract class RecipeScreenMixin {
         EmiDrawContext context = EmiDrawContext.wrap(raw);
 
         List<EmiIngredient> workstations = EmiApi.getRecipeManager().getWorkstations(getFocusedCategory());
-        int total         = workstations == null ? 0 : workstations.size();
+        int total            = workstations == null ? 0 : workstations.size();
         emi$clampScroll(total);
-        int visibleTotal  = emi$getVisibleCount(total);
-        int slotsPerLine  = emi$getSlotsPerLine();
-        int lineCount     = emi$getLineCount(visibleTotal);
-        int resolveOffset = getResolveOffset();
-
+        int visibleTotal     = emi$getVisibleCount(total);
+        int slotsPerLine     = emi$getSlotsPerLine();
+        int lineCount        = emi$getLineCount(visibleTotal);
+        int resolveOffset    = getResolveOffset();
         int slotsInFirstLine = Math.min(slotsPerLine, visibleTotal);
 
-        boolean hasContent = visibleTotal > 0 || RecipeScreen.resolve != null;
-        if (!hasContent) return;
+        if (visibleTotal <= 0) return;
 
         int effectiveLines = Math.max(lineCount, 1);
 
         switch (EmiConfig.workstationLocation) {
             case LEFT -> {
                 int panelX = x - 18 - (effectiveLines - 1) * 18;
-                int panelY = y + 9 - resolveOffset;
+                int panelY = y + 9 + resolveOffset;
                 int panelW = 10 + 18 * effectiveLines;
-                int panelH = (slotsInFirstLine == 0 && resolveOffset > 0)
-                    ? 10 + resolveOffset
-                    : 10 + 18 * slotsInFirstLine + resolveOffset;
+                int panelH = 10 + 18 * slotsInFirstLine;
                 EmiRenderHelper.drawNinePatch(context, TEXTURE,
                     panelX - 5, panelY - 5, panelW, panelH, 36, 0, 5, 1);
             }
             case RIGHT -> {
                 int panelX = x + backgroundWidth;
-                int panelY = y + 9 - resolveOffset;
+                int panelY = y + 9 + resolveOffset;
                 int panelW = 10 + 18 * effectiveLines;
-                int panelH = (slotsInFirstLine == 0 && resolveOffset > 0)
-                    ? 10 + resolveOffset
-                    : 10 + 18 * slotsInFirstLine + resolveOffset;
+                int panelH = 10 + 18 * slotsInFirstLine;
                 EmiRenderHelper.drawNinePatch(context, TEXTURE,
                     panelX - 5, panelY - 5, panelW, panelH, 47, 0, 5, 1);
             }
             case BOTTOM -> {
-                int panelX = x + 5 - resolveOffset;
+                int panelX = x + 5 + resolveOffset;
                 int panelY = y + backgroundHeight - 23;
-                int panelW = (slotsInFirstLine == 0 && resolveOffset > 0)
-                    ? 10 + resolveOffset
-                    : 10 + 18 * slotsInFirstLine + resolveOffset;
+                int panelW = 10 + 18 * slotsInFirstLine;
                 int panelH = 10 + 18 * effectiveLines;
                 EmiRenderHelper.drawNinePatch(context, TEXTURE,
                     panelX - 5, panelY - 5, panelW, panelH, 58, 0, 5, 1);
@@ -294,25 +268,17 @@ public abstract class RecipeScreenMixin {
         int total = workstations == null ? 0 : workstations.size();
         emi$clampScroll(total);
 
-        if (!emi$isMouseOverWorkstationPanel(mouseX, mouseY, total)) {
-            return;
-        }
+        if (!emi$isMouseOverWorkstationPanel(mouseX, mouseY, total)) return;
 
         int maxScrollLines = emi$getMaxScrollLines(total);
-        if (maxScrollLines <= 0) {
-            return;
-        }
-
-        if (amount == 0.0D) {
-            return;
-        }
+        if (maxScrollLines <= 0 || amount == 0.0D) return;
 
         int before = emi$scrollLineOffset;
         if (amount < 0.0D) {
             emi$scrollLineOffset = (emi$scrollLineOffset >= maxScrollLines)
                 ? 0
                 : emi$scrollLineOffset + 1;
-        } else if (amount > 0.0D) {
+        } else {
             emi$scrollLineOffset = (emi$scrollLineOffset <= 0)
                 ? maxScrollLines
                 : emi$scrollLineOffset - 1;
